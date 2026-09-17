@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="AI & Machine Learning Email Spam Detection System using TF-IDF and Logistic Regression.">
+  <title>Email Spam Detection | AI Classifier</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <!-- Background Glow Accents -->
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-top">
+        <div class="brand">
+          <div class="brand-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              <path d="m9 12 2 2 4-4" />
+            </svg>
+          </div>
+          <div>
+            <h1 class="brand-title">Email Spam Detection</h1>
+            <p class="brand-subtitle">AI-powered machine learning system for detecting spam emails</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <div id="backend-status-badge" class="status-badge status-checking">
+            <span class="status-dot"></span>
+            <span id="backend-status-text">Checking Backend...</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Global Connection Alert Banner -->
+    <div id="connection-alert" class="alert-banner alert-warning hidden" role="alert">
+      <div class="alert-icon">⚠️</div>
+      <div class="alert-content">
+        <strong>Backend Unavailable:</strong> Unable to connect to the prediction server. Please make sure the Flask
+        backend is running on <code>http://127.0.0.1:5000</code>.
+      </div>
+      <button type="button" class="alert-close"
+        onclick="document.getElementById('connection-alert').classList.add('hidden')">&times;</button>
+    </div>
+
+    <!-- Main Container -->
+    <main class="main-content">
+      <!-- Input Card -->
+      <div class="card input-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <h2 class="card-title">Email Content Analysis</h2>
+            <p class="card-desc">Type or paste any email message to classify it in real time.</p>
+          </div>
+        </div>
+
+        <!-- Quick Samples -->
+        <div class="sample-section">
+          <span class="sample-label">Try sample email:</span>
+          <div class="sample-chips">
+            <button type="button" class="chip chip-spam" data-sample="bank-phishing">🚨 Bank Phishing</button>
+            <button type="button" class="chip chip-spam" data-sample="lottery-winner">🎉 Lottery Prize</button>
+            <button type="button" class="chip chip-spam" data-sample="package-customs">📦 Delivery Scam</button>
+            <button type="button" class="chip chip-ham" data-sample="team-meeting">💼 Team Meeting</button>
+            <button type="button" class="chip chip-ham" data-sample="invoice-receipt">🧾 Client Invoice</button>
+            <button type="button" class="chip chip-ham" data-sample="code-review">💻 Code Review</button>
+          </div>
+        </div>
+
+        <!-- Form Area -->
+        <form id="spam-form" class="spam-form" onsubmit="return false;">
+          <div class="textarea-wrapper">
+            <label for="email-input" class="sr-only">Email Message Content</label>
+            <textarea id="email-input" name="email"
+              placeholder="Paste your email message here (e.g. subject line and body)..." rows="8" required
+              spellcheck="false"></textarea>
+            <div class="textarea-footer">
+              <span id="char-counter" class="counter">0 characters &bull; 0 words</span>
+              <span class="shortcut-tip">Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to analyze</span>
+            </div>
+          </div>
+
+          <!-- Error message container -->
+          <div id="form-error" class="form-error hidden" role="alert"></div>
+
+          <!-- Actions -->
+          <div class="form-actions">
+            <button type="button" id="clear-btn" class="btn btn-secondary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+              Clear
+            </button>
+            <button type="submit" id="analyze-btn" class="btn btn-primary">
+              <span class="btn-spinner hidden" id="btn-spinner"></span>
+              <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+              </svg>
+              <span id="btn-text">Analyze Email</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Inline Prediction Result Banner -->
+        <div id="result-banner" class="result-banner hidden">
+          <div class="result-banner-left">
+            <div id="verdict-icon" class="verdict-icon">🚨</div>
+            <div>
+              <div class="result-title-row">
+                <h3 id="verdict-title" class="verdict-title">SPAM DETECTED</h3>
+                <span id="result-badge" class="result-badge badge-spam">Spam</span>
+              </div>
+              <p id="verdict-desc" class="verdict-desc">This email is likely to be spam.</p>
+            </div>
+          </div>
+          <div class="result-banner-right">
+            <span class="confidence-label">Confidence</span>
+            <span id="confidence-value" class="confidence-value">0%</span>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>Email Spam Detection ML Application &bull; Built with Python, Scikit-Learn &amp; Flask</p>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
